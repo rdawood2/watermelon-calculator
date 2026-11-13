@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UF/IFAS Watermelon Bed Fertilizer Calculator</title>
+<style>
+:root{--uf-blue:#0021a5;--uf-orange:#fa4616;--ink:#202938;--muted:#5d6878;--line:#d8dee8;--bg:#f4f6fa;--input:#e8f5e9;--calc:#e8f0ff;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Arial,Helvetica,sans-serif}
+header{background:var(--uf-blue);color:#fff;padding:24px max(20px,calc((100% - 1050px)/2))}
+header .eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+header h1{margin:6px 0 4px;font-size:clamp(24px,4vw,34px)}header p{margin:0;color:#e5eaff}
+main{max-width:1050px;margin:24px auto;padding:0 16px 48px}
+.notice{background:#fff8e8;border:1px solid #efd79c;border-radius:10px;padding:12px 15px;margin-bottom:18px;color:#57451d}
+section{background:var(--white);border:1px solid var(--line);border-radius:12px;margin:16px 0;padding:20px;box-shadow:0 2px 8px #14213b0a}
+h2{font-size:20px;margin:0 0 8px;color:var(--uf-blue)}.help{color:var(--muted);margin:0 0 16px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat( auto-fit,minmax(190px,1fr));gap:13px}
+label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}
+input,select{width:100%;padding:10px 11px;border:1px solid #b9c3d2;border-radius:7px;font:inherit;background:var(--input);color:var(--ink)}
+input:focus,select:focus{outline:2px solid #8da9ff;border-color:var(--uf-blue)}
+input[readonly]{background:var(--calc);font-weight:700}
+.output{background:var(--calc);border:1px solid #c8d7ff;border-radius:8px;padding:10px 12px;min-height:43px;font-weight:700}
+.unit{font-size:12px;color:var(--muted);font-weight:400}
+table{width:100%;border-collapse:collapse;margin-top:8px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}th{font-size:13px;color:var(--muted)}td input{max-width:180px}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px}
+.result{background:var(--calc);border:1px solid #c8d7ff;border-radius:9px;padding:12px}.result .k{font-size:12px;color:var(--muted)}.result .v{font-size:22px;font-weight:700;margin-top:3px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+button{border:0;border-radius:8px;padding:11px 16px;font-weight:700;font-size:15px;cursor:pointer}
+.primary{background:var(--uf-blue);color:#fff}.secondary{background:#edf1f7;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.small{font-size:13px;color:var(--muted)}
+.consent{display:flex;gap:10px;align-items:flex-start;margin:12px 0}.consent input{width:auto;margin-top:4px}
+.hidden{display:none!important}
+footer{max-width:1050px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+@media (max-width:650px){
+  header{padding:20px 16px}
+  main{margin:12px auto;padding:0 10px 32px}
+  section{padding:15px;margin:12px 0}
+  .grid{grid-template-columns:1fr 1fr;gap:10px}
+  input,select{min-height:46px;font-size:16px}
+  button{min-height:46px;width:100%}
+  .actions{display:grid;grid-template-columns:1fr}
+  table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  th,td{padding:9px 7px}
+  .results{grid-template-columns:1fr 1fr}
+  .result .v{font-size:19px}
+}
+@media (max-width:390px){
+  .grid,.results{grid-template-columns:1fr}
+}
+@media print{body{background:#fff}header{padding:16px 20px;background:#fff;color:#000;border-bottom:2px solid #222}header p{color:#333}main{margin:0;max-width:none;padding:10px}section{box-shadow:none;break-inside:avoid;margin:10px 0;padding:12px}.actions,.notice .no-print,.consent,.share-controls{display:none!important}input,select{background:#fff;border:0;border-bottom:1px solid #999;padding:4px}footer{padding:10px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">UF/IFAS Extension · Producer calculator</div>
+  <h1>Watermelon Bed Fertilizer Calculator</h1>
+  <p>Pre-plant fertilizer planning, blend calculations and spreader calibration</p>
+</header>
+<main>
+<div class="notice"><strong>Prototype calculation model.</strong> This version reproduces the formulas found in the supplied Excel workbook. It has not yet been agronomically validated or connected to an Extension submission database. Review the recommendations and unit conversions before using it to make fertilizer decisions.</div>
+
+<section>
+<h2>1. Field information</h2>
+<p class="help">Enter the field dimensions. Row acres are calculated from planted row length, number of rows and row spacing.</p>
+<div class="grid">
+<div><label for="season">Year / season</label><input id="season" placeholder="e.g., Spring 2027"></div>
+<div><label for="field">Field ID</label><input id="field" placeholder="Field name or number"></div>
+<div><label for="crop">Crop / variety</label><input id="crop" value="Watermelon"></div>
+<div><label for="totalAcres">Total field acres</label><input id="totalAcres" type="number" min="0" step="any" placeholder="Acres"></div>
+<div><label for="rowLength">Planted row length <span class="unit">(feet)</span></label><input id="rowLength" type="number" min="0" step="any" placeholder="Feet"></div>
+<div><label for="rows">Number of rows</label><input id="rows" type="number" min="0" step="1" placeholder="Rows"></div>
+<div><label for="spacing">Row spacing <span class="unit">(feet)</span></label><input id="spacing" type="number" min="0" step="any" placeholder="Feet"></div>
+<div><label>Calculated row acres</label><div class="output" id="rowAcres">—</div></div>
+</div>
+</section>
+
+<section>
+<h2>2. Soil test results and nutrient recommendations</h2>
+<p class="help">Enter Mehlich III soil test phosphorus and potassium. The unit conversion and interpretation thresholds below follow the supplied workbook.</p>
+<div class="grid">
+<div><label for="units">Soil test units</label><select id="units"><option value="">Select units</option><option value="lbs./A">lbs./A</option><option value="ppm">ppm</option></select></div>
+<div><label for="soilP">Phosphorus (P)</label><input id="soilP" type="number" min="0" step="any" placeholder="Soil test P"></div>
+<div><label for="soilK">Potassium (K)</label><input id="soilK" type="number" min="0" step="any" placeholder="Soil test K"></div>
+</div>
+<table>
+<thead><tr><th>Nutrient</th><th>Converted soil test value (ppm)</th><th>Interpretation</th><th>Recommendation (lb/acre)</th></tr></thead>
+<tbody>
+<tr><td>Phosphorus (P)</td><td id="pPpm">—</td><td id="pLevel">—</td><td id="pRec">—</td></tr>
+<tr><td>Potassium (K)</td><td id="kPpm">—</td><td id="kLevel">—</td><td id="kRec">—</td></tr>
+<tr><td>Nitrogen</td><td>—</td><td>Workbook fixed rate</td><td>150</td></tr>
+</tbody></table>
+<p class="small">Workbook logic: P is LOW below 26 ppm, MED from 26–45 ppm, HIGH above 45 ppm. K is LOW below 36 ppm, MED from 36–60 ppm, HIGH above 60 ppm. Recommendations are 120, 100 and 0 lb/acre respectively.</p>
+</section>
+
+<section>
+<h2>3. Targeted bed application</h2>
+<p class="help">Enter the percentage of each recommended nutrient rate you intend to apply in the bed. Enter percentages as 20 for 20%, not 0.20.</p>
+<table>
+<thead><tr><th>Nutrient</th><th>Recommended rate (lb/acre)</th><th>Target percent applied in bed (%)</th><th>Target pounds applied to bed (lb/acre)</th></tr></thead>
+<tbody>
+<tr><td>N</td><td id="nRec">150</td><td><input id="targetN" type="number" min="0" max="100" step="any" placeholder="%"></td><td class="output" id="targetNLbs">—</td></tr>
+<tr><td>P₂O₅</td><td id="p2o5Rec">—</td><td><input id="targetP" type="number" min="0" max="100" step="any" placeholder="%"></td><td class="output" id="targetPLbs">—</td></tr>
+<tr><td>K₂O</td><td id="k2oRec">—</td><td><input id="targetK" type="number" min="0" max="100" step="any" placeholder="%"></td><td class="output" id="targetKLbs">—</td></tr>
+</tbody></table>
+</section>
+
+<section>
+<h2>4. Purchased fertilizer blend</h2>
+<p class="help">Enter the guaranteed analysis of the fertilizer product. The workbook calculates the blend rate from the nitrogen target and blend N percentage.</p>
+<div class="grid">
+<div><label for="blendN">Blend N (%)</label><input id="blendN" type="number" min="0" max="100" step="any" placeholder="% N"></div>
+<div><label for="blendP">Blend P₂O₅ (%)</label><input id="blendP" type="number" min="0" max="100" step="any" placeholder="% P₂O₅"></div>
+<div><label for="blendK">Blend K₂O (%)</label><input id="blendK" type="number" min="0" max="100" step="any" placeholder="% K₂O"></div>
+</div>
+<div class="results" style="margin-top:15px">
+<div class="result"><div class="k">Fertilizer blend rate</div><div class="v" id="blendRate">—</div><div class="small">lb/row acre</div></div>
+<div class="result"><div class="k">Total blend required</div><div class="v" id="blendTotal">—</div><div class="small">lb for calculated row acres</div></div>
+<div class="result"><div class="k">Linear feet per acre</div><div class="v" id="linearFeet">—</div><div class="small">feet</div></div>
+<div class="result"><div class="k">Spreader calibration target</div><div class="v" id="calibration">—</div><div class="small">lb per 100 feet</div></div>
+</div>
+<p class="small" id="blendNote"></p>
+</section>
+
+<section>
+<h2>5. Actual application</h2>
+<p class="help">After application, enter the total amount of fertilizer applied to this field and the application date.</p>
+<div class="grid">
+<div><label for="actualTotal">Total fertilizer applied to field (lb)</label><input id="actualTotal" type="number" min="0" step="any" placeholder="Total pounds applied"></div>
+<div><label for="actualDate">Date applied</label><input id="actualDate" type="date"></div>
+</div>
+<div class="results" style="margin-top:15px">
+<div class="result"><div class="k">Actual blend rate</div><div class="v" id="actualRate">—</div><div class="small">lb/row acre</div></div>
+<div class="result"><div class="k">Actual N applied</div><div class="v" id="actualN">—</div><div class="small">lb/row acre</div></div>
+<div class="result"><div class="k">Actual P₂O₅ applied</div><div class="v" id="actualP">—</div><div class="small">lb/row acre</div></div>
+<div class="result"><div class="k">Actual K₂O applied</div><div class="v" id="actualK">—</div><div class="small">lb/row acre</div></div>
+</div>
+</section>
+
+<section>
+<h2>6. Field summary</h2>
+<table>
+<thead><tr><th>Measure</th><th>Target</th><th>Actual</th></tr></thead>
+<tbody>
+<tr><td>Fertilizer blend (lb/row acre)</td><td id="sumTargetRate">—</td><td id="sumActualRate">—</td></tr>
+<tr><td>Total fertilizer (lb)</td><td id="sumTargetTotal">—</td><td id="sumActualTotal">—</td></tr>
+</tbody></table>
+<table>
+<thead><tr><th>Nutrient</th><th>Blend analysis (%)</th><th>Target applied in bed (%)</th><th>Target requirement (lb/acre)</th><th>Actual applied (lb/acre)</th></tr></thead>
+<tbody>
+<tr><td>N</td><td id="sumBlendN">—</td><td id="sumTargetN">—</td><td id="sumReqN">—</td><td id="sumActualN">—</td></tr>
+<tr><td>P₂O₅</td><td id="sumBlendP">—</td><td id="sumTargetP">—</td><td id="sumReqP">—</td><td id="sumActualP">—</td></tr>
+<tr><td>K₂O</td><td id="sumBlendK">—</td><td id="sumTargetK">—</td><td id="sumReqK">—</td><td id="sumActualK">—</td></tr>
+</tbody></table>
+<div class="actions">
+<button class="primary" id="printBtn" type="button">Print / Save as PDF</button>
+<button class="secondary" id="resetBtn" type="button">Clear calculator</button>
+</div>
+</section>
+
+<section>
+<h2>7. Optional: share results with UF/IFAS Extension</h2>
+<p class="help">Using the calculator does not submit information. If you choose to share, the application will prepare a data file for submission. This prototype does not transmit or store information at UF/IFAS; a secure Extension connection must be configured before public release.</p>
+<div class="consent"><input id="consent" type="checkbox"><label for="consent" style="font-weight:400">I voluntarily choose to share the field, soil test, fertilizer planning and application information shown in this calculator with UF/IFAS Extension for Extension program evaluation and educational purposes.</label></div>
+<div class="grid share-controls">
+<div><label for="producer">Producer name (optional)</label><input id="producer" placeholder="Name"></div>
+<div><label for="farm">Farm name (optional)</label><input id="farm" placeholder="Farm or business"></div>
+<div><label for="email">Email (optional)</label><input id="email" type="email" placeholder="Email address"></div>
+<div><label for="phone">Phone (optional)</label><input id="phone" type="tel" placeholder="Phone number"></div>
+</div>
+<div class="actions share-controls"><button class="primary" id="exportBtn" type="button" disabled>Prepare voluntary data export</button></div>
+<p class="small" id="shareStatus" aria-live="polite">No information is shared unless you check the box and choose to prepare the export.</p>
+</section>
+</main>
+<footer>UF/IFAS Extension · Draft prototype based on the supplied “Pre-Plant Bed Fertilizer Calculator.xlsx”. The calculator is not a substitute for a current soil-test recommendation or professional agronomic judgment. Confirm the applicable UF/IFAS recommendations and all calculation assumptions before distribution.</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const ids = ["season","field","crop","totalAcres","rowLength","rows","spacing","units","soilP","soilK","targetN","targetP","targetK","blendN","blendP","blendK","actualTotal","actualDate","producer","farm","email","phone"];
+const num = id => { const v=$(id).value.trim(); return v==="" ? null : Number(v); };
+const fmt = (v,d=1) => Number.isFinite(v) ? v.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d}) : "—";
+const set = (id,v) => $(id).textContent = v;
+const pct = id => { const v=num(id); return v===null?null:v/100; };
+function interp(v, nutrient){ if(v===null)return null; if(nutrient==="P") return v<26?"LOW":v<=45?"MED":"HIGH"; return v<36?"LOW":v<=60?"MED":"HIGH"; }
+function rec(level){return level===null?null:level==="LOW"?120:level==="MED"?100:0;}
+function calculate(){
+ const rowLength=num("rowLength"), rows=num("rows"), spacing=num("spacing");
+ const rowAcres=(rowLength!==null&&rows!==null&&spacing!==null&&rowLength>0&&rows>0&&spacing>0)?rowLength*rows*spacing/43560:null;
+ set("rowAcres",rowAcres===null?"—":fmt(rowAcres,3));
+ const units=$("units").value, rawP=num("soilP"), rawK=num("soilK");
+ const pppm=rawP===null||!units?null:(units==="lbs./A"?rawP*0.5:rawP);
+ const kppm=rawK===null||!units?null:(units==="lbs./A"?rawK*0.5:rawK);
+ const plev=interp(pppm,"P"), klev=interp(kppm,"K"), prec=rec(plev), krec=rec(klev);
+ set("pPpm",pppm===null?"—":fmt(pppm,1));set("kPpm",kppm===null?"—":fmt(kppm,1));
+ set("pLevel",plev||"—");set("kLevel",klev||"—");set("pRec",prec===null?"—":fmt(prec,0));set("kRec",krec===null?"—":fmt(krec,0));
+ set("p2o5Rec",prec===null?"—":fmt(prec,0));set("k2oRec",krec===null?"—":fmt(krec,0));
+ const tn=pct("targetN"),tp=pct("targetP"),tk=pct("targetK");
+ const reqN=tn===null?null:150*tn, reqP=prec===null||tp===null?null:prec*tp, reqK=krec===null||tk===null?null:krec*tk;
+ set("targetNLbs",reqN===null?"—":fmt(reqN,2));set("targetPLbs",reqP===null?"—":fmt(reqP,2));set("targetKLbs",reqK===null?"—":fmt(reqK,2));
+ const bn=pct("blendN"),bp=pct("blendP"),bk=pct("blendK");
+ const rate=reqN!==null&&bn!==null&&bn>0?reqN/bn:null;
+ const total=rate!==null&&rowAcres!==null?rate*rowAcres:null;
+ const lf=spacing!==null&&spacing>0?43560/spacing:null;
+ const cal=rate!==null&&lf!==null?rate/lf*100:null;
+ set("blendRate",rate===null?"—":fmt(rate,1));set("blendTotal",total===null?"—":fmt(total,0));set("linearFeet",lf===null?"—":fmt(lf,0));set("calibration",cal===null?"—":fmt(cal,2));
+ let note="";
+ if(reqN!==null&&bn===0) note="Enter a fertilizer blend N percentage greater than zero to calculate the blend rate.";
+ else if(rate!==null&&bp!==null&&bk!==null&&reqP!==null&&reqK!==null){
+   const suppliedP=rate*bp, suppliedK=rate*bk;
+   note=`At this N-based blend rate, the blend supplies approximately ${fmt(suppliedP,1)} lb P₂O₅/acre and ${fmt(suppliedK,1)} lb K₂O/acre. Compare these values with the target requirements above.`;
+ }
+ set("blendNote",note);
+ const actualTotal=num("actualTotal");
+ const actualRate=actualTotal!==null&&rowAcres!==null&&rowAcres>0?actualTotal/rowAcres:null;
+ const an=actualRate!==null&&bn!==null?actualRate*bn:null;
+ const ap=actualRate!==null&&bp!==null?actualRate*bp:null;
+ const ak=actualRate!==null&&bk!==null?actualRate*bk:null;
+ set("actualRate",actualRate===null?"—":fmt(actualRate,1));set("actualN",an===null?"—":fmt(an,2));set("actualP",ap===null?"—":fmt(ap,2));set("actualK",ak===null?"—":fmt(ak,2));
+ set("sumTargetRate",rate===null?"—":fmt(rate,1));set("sumActualRate",actualRate===null?"—":fmt(actualRate,1));
+ set("sumTargetTotal",total===null?"—":fmt(total,0));set("sumActualTotal",actualTotal===null?"—":fmt(actualTotal,0));
+ set("sumBlendN",bn===null?"—":fmt(bn*100,1)+"%");set("sumBlendP",bp===null?"—":fmt(bp*100,1)+"%");set("sumBlendK",bk===null?"—":fmt(bk*100,1)+"%");
+ set("sumTargetN",tn===null?"—":fmt(tn*100,1)+"%");set("sumTargetP",tp===null?"—":fmt(tp*100,1)+"%");set("sumTargetK",tk===null?"—":fmt(tk*100,1)+"%");
+ set("sumReqN",reqN===null?"—":fmt(reqN,2));set("sumReqP",reqP===null?"—":fmt(reqP,2));set("sumReqK",reqK===null?"—":fmt(reqK,2));
+ set("sumActualN",an===null?"—":fmt(an,2));set("sumActualP",ap===null?"—":fmt(ap,2));set("sumActualK",ak===null?"—":fmt(ak,2));
+ return {rowAcres,pppm,kppm,plev,klev,prec,krec,reqN,reqP,reqK,rate,total,lf,cal,actualTotal,actualRate,an,ap,ak,bn,bp,bk,tn,tp,tk};
+}
+function dataRecord(){
+ const c=calculate();
+ return {
+  application:"UF/IFAS Watermelon Bed Fertilizer Calculator",
+  prototype_version:"1.0",
+  exported_at:new Date().toISOString(),
+  voluntary_submission:true,
+  field:{season:$("season").value,field_id:$("field").value,crop_variety:$("crop").value,total_field_acres:num("totalAcres"),planted_row_length_ft:num("rowLength"),number_of_rows:num("rows"),row_spacing_ft:num("spacing"),calculated_row_acres:c.rowAcres},
+  soil_test:{units:$("units").value,phosphorus_entered:num("soilP"),potassium_entered:num("soilK"),phosphorus_ppm:c.pppm,potassium_ppm:c.kppm,phosphorus_interpretation:c.plev,potassium_interpretation:c.klev},
+  recommendations_lb_acre:{nitrogen:150,phosphorus_p2o5:c.prec,potassium_k2o:c.krec},
+  bed_targets:{nitrogen_percent:c.tn===null?null:c.tn*100,phosphorus_percent:c.tp===null?null:c.tp*100,potassium_percent:c.tk===null?null:c.tk*100,nitrogen_lb_acre:c.reqN,phosphorus_p2o5_lb_acre:c.reqP,potassium_k2o_lb_acre:c.reqK},
+  fertilizer_blend_percent:{nitrogen:c.bn===null?null:c.bn*100,phosphorus_p2o5:c.bp===null?null:c.bp*100,potassium_k2o:c.bk===null?null:c.bk*100},
+  target_calculations:{blend_lb_acre:c.rate,total_blend_lb:c.total,linear_ft_per_acre:c.lf,lb_per_100_ft:c.cal},
+  actual_application:{total_blend_lb:c.actualTotal,date:$("actualDate").value||null,blend_lb_acre:c.actualRate,nitrogen_lb_acre:c.an,phosphorus_p2o5_lb_acre:c.ap,potassium_k2o_lb_acre:c.ak},
+  contact_optional:{producer:$("producer").value||null,farm:$("farm").value||null,email:$("email").value||null,phone:$("phone").value||null}
+ };
+}
+ids.forEach(id=>$(id).addEventListener("input",calculate));
+$("units").addEventListener("change",calculate);
+$("printBtn").addEventListener("click",()=>window.print());
+$("resetBtn").addEventListener("click",()=>{if(confirm("Clear all calculator entries?")){ids.forEach(id=>$(id).value="");$("crop").value="Watermelon";$("consent").checked=false;$("exportBtn").disabled=true;$("shareStatus").textContent="No information is shared unless you check the box and choose to prepare the export.";calculate();}});
+$("consent").addEventListener("change",()=>{$("exportBtn").disabled=!$("consent").checked;$("shareStatus").textContent=$("consent").checked?"You have chosen to prepare a voluntary data export. Nothing is transmitted automatically.":"No information is shared unless you check the box and choose to prepare the export.";});
+$("exportBtn").addEventListener("click",()=>{
+ if(!$("consent").checked)return;
+ const blob=new Blob([JSON.stringify(dataRecord(),null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="watermelon-bed-fertilizer-extension-submission.json";a.click();URL.revokeObjectURL(url);
+ $("shareStatus").textContent="Your voluntary data file has been prepared and downloaded to this device. It has NOT been sent to UF/IFAS; a secure submission connection is still required.";
+});
+calculate();
+</script>
+</body>
+</html>
